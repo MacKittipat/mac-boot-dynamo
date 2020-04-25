@@ -8,7 +8,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.mackittipat.bootdynamo.model.Message;
+import com.mackittipat.bootdynamo.model.UserMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -35,28 +35,48 @@ public class App implements CommandLineRunner {
                 .withRegion(Regions.AP_SOUTHEAST_1)
                 .build();
 
+        // List all tables
         amazonDynamoDB.listTables().getTableNames().forEach(t -> {
             log.info("Table = " + t);
         });
 
-        // -------------------------------------------------------------------------------------------------------------
-
         DynamoDBMapper dynamoDBMapper = new DynamoDBMapper(amazonDynamoDB);
-        Message message = dynamoDBMapper.load(Message.class, "mac", 1581155404L);
-        log.info("Load Message = {}", message.toString());
 
         // -------------------------------------------------------------------------------------------------------------
 
-        Map<String, AttributeValue> eav = new HashMap<>();
-        eav.put(":val1", new AttributeValue().withS("mac"));
+        // Insert
+//        UserMessage userMessage = new UserMessage();
+//        userMessage.setUsername("Mac");
+//        userMessage.setCreatedTime(System.currentTimeMillis());
+//        userMessage.setMessage("Hello");
+//        dynamoDBMapper.save(userMessage);
 
-        DynamoDBQueryExpression<Message> dynamoDBQueryExpression = new DynamoDBQueryExpression<Message>()
-                .withKeyConditionExpression("username = :val1")
-                .withExpressionAttributeValues(eav);
+        // -------------------------------------------------------------------------------------------------------------
 
-        List<Message> messageList = dynamoDBMapper.query(Message.class, dynamoDBQueryExpression);
-        messageList.forEach(m -> {
+        // Get
+        UserMessage userMessage = dynamoDBMapper.load(UserMessage.class, "Mac", 1587807661974L);
+        log.info("Load Message = {}", userMessage.toString());
+
+        // -------------------------------------------------------------------------------------------------------------
+
+        // Query
+        Map<String, AttributeValue> attMap = new HashMap<>();
+        attMap.put(":username", new AttributeValue().withS("Mac"));
+        attMap.put(":createdTime", new AttributeValue().withN("1587807661974"));
+        attMap.put(":message", new AttributeValue().withS("o"));
+
+        DynamoDBQueryExpression<UserMessage> dynamoDBQueryExpression = new DynamoDBQueryExpression<UserMessage>()
+                .withKeyConditionExpression("Username = :username AND CreatedTime > :createdTime")
+                // Use filter with non-key.
+                // A QueryFilter is applied after the items have already been read;
+                // the process of filtering does not consume any additional read capacity units.
+                .withFilterExpression("contains(Message, :message)")
+                .withExpressionAttributeValues(attMap);
+
+        List<UserMessage> userMessageList = dynamoDBMapper.query(UserMessage.class, dynamoDBQueryExpression);
+        userMessageList.forEach(m -> {
             log.info("Query Message = {}", m.toString());
         });
+
     }
 }

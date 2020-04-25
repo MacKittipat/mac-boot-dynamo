@@ -7,16 +7,16 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import lombok.Data;
 
 @Data
-@DynamoDBTable(tableName = "message")
-public class Message {
+@DynamoDBTable(tableName = "UserMessage")
+public class UserMessage {
 
-    @DynamoDBHashKey
+    @DynamoDBHashKey(attributeName = "Username")
     private String username;
 
-    @DynamoDBRangeKey(attributeName = "datetime")
-    private Long datetime;
+    @DynamoDBRangeKey(attributeName = "CreatedTime")
+    private Long createdTime;
 
-    @DynamoDBAttribute
-    private String msg;
+    @DynamoDBAttribute(attributeName = "Message")
+    private String message;
 
 }
